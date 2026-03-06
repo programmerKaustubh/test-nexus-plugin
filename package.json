@@ -1,0 +1,6 @@
+{
+  "name": "testnexus-crashlytics-alerts",
+  "version": "0.1.0",
+  "description": "Firebase Extension: Forward Crashlytics alerts to TestNexus",
+  "private": true
+}

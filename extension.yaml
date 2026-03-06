@@ -1,0 +1,154 @@
+name: testnexus-crashlytics-alerts
+version: 0.1.0
+specVersion: v1beta
+
+displayName: TestNexus Crashlytics Alerts
+description: >-
+  Forward Firebase Crashlytics alerts to your TestNexus account for
+  real-time push notifications on your mobile device.
+
+license: Apache-2.0
+
+author:
+  authorName: TwoCan
+  url: https://testnexus.app
+
+billingRequired: true
+
+roles:
+  - role: firebasecrashlyticsviewer
+    reason: >-
+      Required to receive Crashlytics alert events from your project.
+
+resources:
+  - name: onNewFatalIssue
+    type: firebaseextensions.v1beta.function
+    description: Handles new fatal crash issues
+    properties:
+      runtime: nodejs22
+      eventTrigger:
+        eventType: google.firebase.crashlytics.newFatalIssue.v1
+        channel: projects/${param:PROJECT_ID}/locations/${param:LOCATION}/channels/firebase
+
+  - name: onNewNonfatalIssue
+    type: firebaseextensions.v1beta.function
+    description: Handles new non-fatal issues
+    properties:
+      runtime: nodejs22
+      eventTrigger:
+        eventType: google.firebase.crashlytics.newNonfatalIssue.v1
+        channel: projects/${param:PROJECT_ID}/locations/${param:LOCATION}/channels/firebase
+
+  - name: onNewAnrIssue
+    type: firebaseextensions.v1beta.function
+    description: Handles new ANR issues
+    properties:
+      runtime: nodejs22
+      eventTrigger:
+        eventType: google.firebase.crashlytics.newAnrIssue.v1
+        channel: projects/${param:PROJECT_ID}/locations/${param:LOCATION}/channels/firebase
+
+  - name: onRegression
+    type: firebaseextensions.v1beta.function
+    description: Handles regression alerts
+    properties:
+      runtime: nodejs22
+      eventTrigger:
+        eventType: google.firebase.crashlytics.regression.v1
+        channel: projects/${param:PROJECT_ID}/locations/${param:LOCATION}/channels/firebase
+
+  - name: onVelocityAlert
+    type: firebaseextensions.v1beta.function
+    description: Handles velocity alerts (trending issues)
+    properties:
+      runtime: nodejs22
+      eventTrigger:
+        eventType: google.firebase.crashlytics.newTrendingIssueDetected.v1
+        channel: projects/${param:PROJECT_ID}/locations/${param:LOCATION}/channels/firebase
+
+  - name: onStabilityDigest
+    type: firebaseextensions.v1beta.function
+    description: Handles stability digest reports
+    properties:
+      runtime: nodejs22
+      eventTrigger:
+        eventType: google.firebase.crashlytics.stabilityDigest.v1
+        channel: projects/${param:PROJECT_ID}/locations/${param:LOCATION}/channels/firebase
+
+params:
+  - param: CONNECTION_TOKEN
+    label: TestNexus Connection Token
+    description: >-
+      Your connection token from the TestNexus app (Connected Apps section).
+      Format: tnx_ followed by 32 hex characters.
+    type: secret
+    required: true
+    validationRegex: "^tnx_[a-f0-9]{32}$"
+    validationErrorMessage: >-
+      Token must match format tnx_ followed by 32 lowercase hex characters.
+
+  - param: APP_IDENTIFIER
+    label: App Identifier
+    description: >-
+      A human-readable name for this app (e.g., "My Production App").
+      This appears in alert notifications.
+    type: string
+    required: true
+    validationRegex: "^.{1,100}$"
+    validationErrorMessage: Must be between 1 and 100 characters.
+
+  - param: RECIPIENT_EMAILS
+    label: Recipient Email Addresses
+    description: >-
+      Comma-separated email addresses of TestNexus users who should
+      receive alerts (e.g., "dev@example.com,qa@example.com").
+    type: string
+    required: true
+
+  - param: ALERT_TYPES
+    label: Alert Types to Forward
+    description: >-
+      Which Crashlytics alert types should be forwarded to TestNexus.
+    type: multiSelect
+    required: true
+    options:
+      - label: Fatal Crashes
+        value: fatal
+      - label: Non-fatal Errors
+        value: nonfatal
+      - label: ANRs (Application Not Responding)
+        value: anr
+      - label: Regressions
+        value: regression
+      - label: Velocity Alerts (Trending Issues)
+        value: velocity
+      - label: Stability Digest
+        value: digest
+
+  - param: LOCATION
+    label: Cloud Functions location
+    description: >-
+      Where should the extension's functions be deployed?
+    type: select
+    required: true
+    default: us-central1
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Oregon (us-west1)
+        value: us-west1
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+
+  - param: TESTNEXUS_BACKEND_URL
+    label: TestNexus Backend URL
+    description: >-
+      The URL of the TestNexus backend endpoint. Only change this for
+      development/testing purposes.
+    type: string
+    required: true
+    default: https://us-central1-test-nexus-prod.cloudfunctions.net/receiveCrashlyticsAlert
