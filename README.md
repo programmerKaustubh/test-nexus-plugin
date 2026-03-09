@@ -209,6 +209,7 @@ firebase ext:uninstall testnexus-crashlytics-alerts --project=YOUR_PROJECT_ID
 | No notifications, extension is deployed | Crashlytics hasn't detected a new issue yet | Trigger a test crash and wait 1-2 minutes for Crashlytics to process |
 | Only some team members get alerts | Their token isn't in the extension config | Add their token to the comma-separated list and redeploy |
 | Notifications arrive late | FCM delivery delay or device battery settings | Check device connectivity; exempt TestNexus from battery optimization |
+| Crashes appear in Crashlytics but no notifications arrive | Eventarc triggers were not created | This happens when you use `firebase deploy` without first running `firebase ext:install`. Deploy alone creates the functions but NOT the Eventarc triggers that route crash events to them. Fix: run `firebase ext:uninstall <instance-name> --project=YOUR_PROJECT_ID`, then `firebase ext:install . --project=YOUR_PROJECT_ID` to properly create triggers, then `firebase deploy --only extensions --project=YOUR_PROJECT_ID`. Verify triggers exist in Google Cloud Console → Eventarc → Triggers (you should see 6 triggers). |
 | "Eventarc Service Agent" permission error during deploy | Blaze plan was just enabled or project is new | Wait 2-3 minutes for permissions to propagate, then run `firebase deploy --only extensions` again |
 | "Build failed" / RESOURCE_ERROR during deploy | Function dependencies not installed | Run `cd functions && npm install && cd ..` then redeploy |
 | "No params file found" error during deploy | Instance name mismatch between `firebase.json` and `extensions/` directory | Check that the instance name in `firebase.json` matches the `.env` filename in the `extensions/` folder. See "Cleaning up duplicate instances" below. |
@@ -235,9 +236,10 @@ Run through this checklist:
 1. **Is the token still active?** Open TestNexus → Connected Apps → check the connection status shows "Active"
 2. **Is Crashlytics set up?** Verify crash data appears in your [Firebase Console → Crashlytics](https://console.firebase.google.com/project/_/crashlytics)
 3. **Is the extension deployed?** Run `firebase ext:list --project=YOUR_PROJECT_ID` to confirm it's listed
-4. **Any errors in logs?** Check [Cloud Functions logs](https://console.firebase.google.com/project/_/functions/logs) for the error codes listed above
-5. **Are notifications enabled on your device?** Make sure TestNexus has notification permissions (Android Settings → Apps → TestNexus → Notifications)
-6. **Battery optimization?** Exempt TestNexus from battery optimization (Android Settings → Apps → TestNexus → Battery → Unrestricted)
+4. **Do Eventarc triggers exist?** Check Google Cloud Console → Eventarc → Triggers for your project. You should see 6 triggers. If there are none, the extension was deployed without `ext:install` — see the troubleshooting table above.
+5. **Any errors in logs?** Check [Cloud Functions logs](https://console.firebase.google.com/project/_/functions/logs) for the error codes listed above
+6. **Are notifications enabled on your device?** Make sure TestNexus has notification permissions (Android Settings → Apps → TestNexus → Notifications)
+7. **Battery optimization?** Exempt TestNexus from battery optimization (Android Settings → Apps → TestNexus → Battery → Unrestricted)
 
 ### Cleaning Up Duplicate Instances
 
