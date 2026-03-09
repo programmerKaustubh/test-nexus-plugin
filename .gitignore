@@ -9,6 +9,7 @@ node_modules/
 # Environment
 .env
 .env.*
+extensions/*.env
 
 # OS
 .DS_Store
@@ -16,6 +17,7 @@ Thumbs.db
 
 # Firebase
 .firebase/
+.firebaserc
 firebase-debug.log
 firebase-debug.*.log
 ui-debug.log

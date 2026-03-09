@@ -1,31 +1,66 @@
-### Setup Complete
+### You're all set
 
-The TestNexus Crashlytics Alerts extension has been installed successfully.
+The next time Crashlytics detects a crash in your app, you'll get a push notification in TestNexus.
 
-### What happens next
+### Your configuration
 
-When a Crashlytics alert fires in your project, this extension will:
+- **App name**: ${param:APP_IDENTIFIER}
+- **Region**: ${param:LOCATION}
 
-1. Check if the alert type is enabled in your configuration
-2. Build a normalized payload
-3. Send it to the TestNexus backend using your connection token
-4. You'll receive a push notification in the TestNexus app
+### Deploy the extension
 
-### Configuration
+After installation, deploy to activate:
 
-You configured:
-- **Connection Token**: Your TestNexus connection token (stored securely)
-- **App Identifier**: ${param:APP_IDENTIFIER}
-- **Alert Types**: ${param:ALERT_TYPES}
-- **Recipient Emails**: ${param:RECIPIENT_EMAILS}
+```bash
+firebase deploy --only extensions
+```
 
-### Monitoring
+### Verify it works
 
-Check the Cloud Functions logs in the Firebase console to verify alerts are being forwarded successfully.
+1. Trigger a test crash in your app
+2. Wait for Crashlytics to process the event (usually 1-2 minutes)
+3. Check for a notification in the TestNexus app
 
-### Troubleshooting
+### Multiple tokens
 
-If alerts are not appearing in TestNexus:
-1. Verify your connection token is active (check Connected Apps in TestNexus)
-2. Check Cloud Functions logs for errors
-3. Ensure Crashlytics is properly set up in your project
+This extension supports multiple connection tokens. Each token can have different alert types and recipients, all configured in the TestNexus app. To add or update tokens:
+
+```bash
+firebase ext:configure testnexus-crashlytics-alerts --project=YOUR_PROJECT_ID
+```
+
+Enter tokens comma-separated (e.g., `tnx_abc...,tnx_xyz...`).
+
+### Managing your connections
+
+Open the TestNexus app → **Connected Apps** to:
+
+- View active connections
+- Edit recipients per connection
+- Configure alert types per connection
+- Revoke a token (alerts stop immediately)
+
+### Not receiving notifications?
+
+1. Verify your token is still active in TestNexus (not revoked)
+2. Recipients are managed in the TestNexus app (Connected Apps → tap connection → Edit Recipients)
+3. Check [Cloud Functions logs](https://console.firebase.google.com/project/_/functions/logs) for errors
+4. Confirm Crashlytics is set up and receiving crash data in your project
+5. Ensure the extension is deployed: `firebase deploy --only extensions`
+
+### Updating the extension
+
+Pull the latest changes and update:
+
+```bash
+cd test-nexus-plugin
+git pull
+firebase ext:update testnexus-crashlytics-alerts ./test-nexus-plugin --project=YOUR_PROJECT_ID
+firebase deploy --only extensions --project=YOUR_PROJECT_ID
+```
+
+### Uninstalling
+
+```bash
+firebase ext:uninstall testnexus-crashlytics-alerts --project=YOUR_PROJECT_ID
+```

@@ -13,7 +13,7 @@ const {logger} = require("firebase-functions");
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
 const TIMEOUT_MS = 30000;
-const EXTENSION_VERSION = "0.1.0";
+const EXTENSION_VERSION = "1.0.0";
 
 /**
  * Posts a JSON payload to the TestNexus backend.
