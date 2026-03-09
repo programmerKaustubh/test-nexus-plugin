@@ -112,7 +112,9 @@ The CLI will prompt you for 4 parameters. Here's what each one means and what to
 | **Connection Token(s)** | Links this extension to your TestNexus account. This is how we know who to notify when a crash happens. | Paste the `tnx_...` token you copied in Step 1. For multiple team members, comma-separate their tokens (e.g., `tnx_abc...,tnx_xyz...`). |
 | **App Identifier** | A friendly name that appears in your crash notifications so you can tell which app crashed. | Something like `My App Production` or `AwesomeApp Staging`. 1-100 characters. |
 | **Cloud Functions Location** | The data center region where the extension's Cloud Functions will run. Pick the one closest to your Firebase project for lowest latency. | `us-central1` (Iowa) is recommended. Other options: `us-east1` (South Carolina), `us-west1` (Oregon), `europe-west1` (Belgium), `asia-northeast1` (Tokyo). |
-| **Backend URL** | The TestNexus server endpoint that receives forwarded alerts. | **Press Enter to keep the default.** Only change this if you're running a self-hosted TestNexus backend (you almost certainly aren't). |
+| **Backend URL** | The TestNexus server endpoint that receives forwarded alerts. | **Press Enter to keep the default.** Do not type or paste a URL here unless you're running a self-hosted TestNexus backend (you almost certainly aren't). Manually entering the URL risks truncation or typos that will silently break alert delivery. |
+
+> **Warning: Do not run `ext:install` multiple times.** Each run creates a new extension instance with its own entry in `firebase.json` and a new `.env` file in the `extensions/` folder. If you need to change your configuration after installing, use `firebase ext:configure` instead (see [Multiple Team Members](#multiple-team-members--multiple-tokens)). If you accidentally ran `ext:install` more than once, see [Troubleshooting](#troubleshooting) for how to clean up duplicate instances.
 
 ### Step 4: Deploy
 
@@ -209,7 +211,9 @@ firebase ext:uninstall testnexus-crashlytics-alerts --project=YOUR_PROJECT_ID
 | Notifications arrive late | FCM delivery delay or device battery settings | Check device connectivity; exempt TestNexus from battery optimization |
 | "Eventarc Service Agent" permission error during deploy | Blaze plan was just enabled or project is new | Wait 2-3 minutes for permissions to propagate, then run `firebase deploy --only extensions` again |
 | "Build failed" / RESOURCE_ERROR during deploy | Function dependencies not installed | Run `cd functions && npm install && cd ..` then redeploy |
-| "No params file found" error during deploy | Instance name mismatch between `firebase.json` and `extensions/` directory | Check that the instance name in `firebase.json` matches the `.env` filename in the `extensions/` folder |
+| "No params file found" error during deploy | Instance name mismatch between `firebase.json` and `extensions/` directory | Check that the instance name in `firebase.json` matches the `.env` filename in the `extensions/` folder. See "Cleaning up duplicate instances" below. |
+| Duplicate instances after running `ext:install` multiple times | Each `ext:install` creates a new instance | See "Cleaning up duplicate instances" below |
+| Alerts not arriving but no errors in logs | Backend URL was truncated or mistyped during setup | Reconfigure and verify the Backend URL is exactly `https://us-central1-test-nexus-prod.cloudfunctions.net/receiveCrashlyticsAlert` — or just press Enter to use the default |
 
 ### Error Codes in Cloud Functions Logs
 
@@ -234,6 +238,43 @@ Run through this checklist:
 4. **Any errors in logs?** Check [Cloud Functions logs](https://console.firebase.google.com/project/_/functions/logs) for the error codes listed above
 5. **Are notifications enabled on your device?** Make sure TestNexus has notification permissions (Android Settings → Apps → TestNexus → Notifications)
 6. **Battery optimization?** Exempt TestNexus from battery optimization (Android Settings → Apps → TestNexus → Battery → Unrestricted)
+
+### Cleaning Up Duplicate Instances
+
+If you accidentally ran `firebase ext:install` multiple times, you'll have duplicate entries in `firebase.json` and extra `.env` files in the `extensions/` folder. This can cause "No params file found" errors during deploy. To fix:
+
+1. Open `firebase.json` and look at the `"extensions"` section. You'll see multiple entries:
+   ```json
+   {
+     "extensions": {
+       "testnexus-crashlytics-alerts": ".",
+       "testnexus-crashlytics-alerts-abcd": "."
+     }
+   }
+   ```
+
+2. Decide which instance to keep (check the matching `.env` files in `extensions/` to see which has the correct token and settings).
+
+3. Remove the extra entries from `firebase.json` so only one remains:
+   ```json
+   {
+     "extensions": {
+       "testnexus-crashlytics-alerts": "."
+     }
+   }
+   ```
+
+4. Delete the extra `.env` files from the `extensions/` folder that no longer match.
+
+5. Uninstall the orphaned instances from Firebase:
+   ```bash
+   firebase ext:uninstall <instance-name-to-remove> --project=YOUR_PROJECT_ID
+   ```
+
+6. Redeploy:
+   ```bash
+   firebase deploy --only extensions --project=YOUR_PROJECT_ID
+   ```
 
 ---
 
