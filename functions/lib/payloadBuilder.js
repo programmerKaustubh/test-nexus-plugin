@@ -22,7 +22,7 @@ function buildPayload(alertType, event, appIdentifier) {
   const base = {
     alertType,
     appIdentifier,
-    platform: "android",
+    platform: data.platform || "android",
     bundleId: data.bundleId || data.appId || "",
   };
 

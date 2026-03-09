@@ -125,12 +125,8 @@ params:
       For a single token, enter it directly (e.g., tnx_abc123...).
       For multiple tokens, separate with commas (e.g., tnx_abc123...,tnx_xyz789...).
       Each token can have different alert types and recipients configured in the TestNexus app.
-    type: string
+    type: secret
     required: true
-    validationRegex: "^[ ]*tnx_[a-f0-9]{32}([ ]*,[ ]*tnx_[a-f0-9]{32})*[ ]*$"
-    validationErrorMessage: >-
-      Must be one or more tokens in format tnx_ followed by 32 lowercase hex characters.
-      Separate multiple tokens with commas.
 
   - param: APP_IDENTIFIER
     label: App Identifier
