@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output (compiled TypeScript)
+functions/lib/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Environment
+.env
+.env.*
+extensions/*.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Firebase
+.firebase/
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+ui-debug.log
+
+# Extension instance configs (user-specific, contains secrets references)
+extensions/
