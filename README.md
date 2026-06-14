@@ -390,6 +390,14 @@ Open the Test Nexus app → **Connected Apps** to:
 
 ## Updating to a New Version
 
+> **First, find your exact instance ID.** Installed instances usually carry a
+> random suffix (e.g. `testnexus-crashlytics-alerts-a1b2`), not the plain name.
+> List your instances and note the real ID — you'll use it below:
+>
+> ```bash
+> firebase ext:list --project=YOUR_PROJECT_ID
+> ```
+
 1. Download the latest extension package from [twocan.us/extension](https://twocan.us/extension)
 2. Unzip the new version to a convenient location
 3. Navigate to the unzipped folder and install dependencies:
@@ -398,27 +406,65 @@ Open the Test Nexus app → **Connected Apps** to:
 cd testnexus-app-health-watcher/functions && npm install && cd ..
 ```
 
-4. Update the extension:
+4. Make sure `firebase.json` lists your **exact** instance ID, pointing at the local source (`.`):
 
-```bash
-firebase ext:update testnexus-crashlytics-alerts . --project=YOUR_PROJECT_ID
+```json
+{
+  "extensions": {
+    "YOUR_INSTANCE_ID": "."
+  }
+}
 ```
 
-5. Redeploy:
+5. Make sure a params file exists at `extensions/YOUR_INSTANCE_ID.env` with your settings (including `CONNECTION_TOKEN`). If you don't have it, copy `extensions/.env.example` and fill in your values. You can read your existing token back from Secret Manager:
+
+```bash
+gcloud secrets versions access latest \
+  --secret=ext-YOUR_INSTANCE_ID-CONNECTION_TOKEN \
+  --project=YOUR_PROJECT_ID
+```
+
+6. Deploy the update:
 
 ```bash
 firebase deploy --only extensions --project=YOUR_PROJECT_ID
 ```
 
+> **Note on `ext:update`:** Older guides used `firebase ext:update`. With current
+> Firebase CLI versions this no longer works for locally-sourced extensions — the
+> CLI responds *"Updating an extension with local source is not necessary. Rerun
+> firebase deploy…"*. Use `firebase deploy --only extensions` (step 6) instead.
+
 > After updating, verify that your IAM roles (Remote Config Admin, Monitoring Viewer) are still in place. Extension updates should not affect IAM, but it's worth confirming.
 
 ## Uninstalling
 
+With current Firebase CLI versions, uninstalling a locally-sourced extension is
+**two steps**:
+
+1. Remove the instance from your local manifest:
+
 ```bash
-firebase ext:uninstall testnexus-crashlytics-alerts --project=YOUR_PROJECT_ID
+firebase ext:uninstall YOUR_INSTANCE_ID --project=YOUR_PROJECT_ID
 ```
 
-This removes the extension's Cloud Functions and Eventarc triggers. Secrets in Secret Manager may remain — see [Cleaning Up](#cleaning-up) for full removal.
+This only edits your local `firebase.json` and removes the instance's `.env` file. **The instance is still running in your project at this point** — this step alone does *not* delete it from the cloud.
+
+2. Apply the change to actually delete it from your project:
+
+```bash
+firebase deploy --only extensions --project=YOUR_PROJECT_ID
+```
+
+The deploy reconciles your project with the (now-empty) manifest and deletes the instance, its Cloud Functions, Eventarc triggers, and service account.
+
+Confirm it's gone:
+
+```bash
+firebase ext:list --project=YOUR_PROJECT_ID
+```
+
+Secrets in Secret Manager may remain — see [Cleaning Up](#cleaning-up) for full removal.
 
 ---
 
